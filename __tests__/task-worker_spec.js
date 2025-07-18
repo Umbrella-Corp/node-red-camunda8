@@ -20,7 +20,8 @@ describe('task-worker node', () => {
                 id: 'n1',
                 type: 'camunda',
                 name: 'camunda',
-                contactPoint: 'localhost:1234',
+                serverMode: 'self-hosted',
+                clusterEndpoint: 'localhost:1234',
             },
             {
                 id: 'n2',

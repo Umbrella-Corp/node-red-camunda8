@@ -8,15 +8,33 @@ module.exports = function (RED) {
 
         const node = this;
 
-        // Validate configuration
-        if (!config.contactPoint) {
-            node.error('Missing contact point configuration');
+        // Validate configuration based on server mode
+        if (config.serverMode === 'saas') {
+            if (!config.clusterId) {
+                node.error('Missing cluster ID for SaaS mode');
+                return;
+            }
+        } else if (config.serverMode === 'self-hosted') {
+            if (!config.clusterEndpoint) {
+                node.error('Missing cluster endpoint for Self Hosted mode');
+                return;
+            }
+        } else {
+            node.error('Invalid server mode. Must be either "saas" or "self-hosted"');
             return;
+        }
+
+        // Determine the contact point based on server mode
+        let contactPoint;
+        if (config.serverMode === 'saas') {
+            contactPoint = `${config.clusterId}.zeebe.camunda.io:443`;
+        } else {
+            contactPoint = config.clusterEndpoint;
         }
 
         // Map Node-RED configuration to Camunda8 SDK format
         const c8Config = {
-            ZEEBE_GRPC_ADDRESS: config.contactPoint,
+            ZEEBE_GRPC_ADDRESS: contactPoint,
             CAMUNDA_SECURE_CONNECTION: Boolean(config.useTls),
         };
 
@@ -30,7 +48,7 @@ module.exports = function (RED) {
         // Configure logging and callbacks
         const clientOptions = {
             onReady: () => {
-                node.log(`Connected to ${config.contactPoint}`);
+                node.log(`Connected to ${contactPoint} (${config.serverMode})`);
                 node.emit('ready');
             },
             onConnectionError: (error) => {
