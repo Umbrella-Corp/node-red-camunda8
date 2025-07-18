@@ -2,9 +2,14 @@
     RED.nodes.registerType('camunda', {
         category: 'config',
         defaults: {
-            name: { value: '' },
-            contactPoint: {
-                value: '<YOUR_CLUSTER_ID>.zeebe.camunda.io:443',
+            name: { value: '', required: true },
+            serverMode: { value: 'saas', required: true },
+            clusterId: {
+                value: '',
+                required: true,
+            },
+            clusterEndpoint: {
+                value: '',
                 required: true,
             },
             useTls: { value: true, required: false },
@@ -12,15 +17,34 @@
             useLongpoll: { value: true, required: false },
             oAuthUrl: {
                 value: 'https://login.cloud.camunda.io/oauth/token',
-                required: false,
+                required: true,
             },
             clientId: { value: '', required: false },
             clientSecret: { value: '', required: false },
         },
         label: function () {
-            return this.name || this.contactPoint || 'camunda';
+            return this.name || this.clusterId || 'camunda';
         },
         icon: 'camunda.svg',
+        oneditprepare: function() {
+            // Function to show/hide fields based on server mode
+            function updateFieldVisibility() {
+                var serverMode = $('#node-config-input-serverMode').val();
+                if (serverMode === 'saas') {
+                    $('#clusterId-row').show();
+                    $('#clusterEndpoint-row').hide();
+                } else {
+                    $('#clusterId-row').hide();
+                    $('#clusterEndpoint-row').show();
+                }
+            }
+            
+            // Initial visibility setup
+            updateFieldVisibility();
+            
+            // Update visibility when server mode changes
+            $('#node-config-input-serverMode').on('change', updateFieldVisibility);
+        }
     });
 </script>
 
@@ -29,26 +53,40 @@
         <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-config-input-name" placeholder="Name">
     </div>
-
+    
     <div class="form-row">
-        <label for="node-config-input-contactPoint"><i class="fa fa-server"></i> Contact Point</label>
-        <input type="text" id="node-config-input-contactPoint">
+        <label for="node-config-input-serverMode"><i class="fa fa-server"></i> Server Mode</label>
+        <select id="node-config-input-serverMode">
+            <option value="saas">SaaS</option>
+            <option value="self-hosted">Self Hosted</option>
+        </select>
     </div>
+
+    <div class="form-row" id="clusterId-row">
+        <label for="node-config-input-clusterId"><i class="fa fa-cloud"></i> Cluster ID</label>
+        <input type="text" id="node-config-input-clusterId" placeholder="your-cluster-id">
+    </div>
+    
+    <div class="form-row" id="clusterEndpoint-row" style="display: none;">
+        <label for="node-config-input-clusterEndpoint"><i class="fa fa-server"></i> Cluster Endpoint</label>
+        <input type="text" id="node-config-input-clusterEndpoint" placeholder="localhost:26500">
+    </div>
+    
     <div class="form-row">
         <label for="node-config-input-useTls"><i class="fa fa-lock"></i> TLS</label>
         <input type="checkbox" id="node-config-input-useTls">
     </div>
     <div class="form-row">
-        <label for="node-config-input-eagerConnection"><i class="fa fa-lock"></i> Eager Connection</label>
+        <label for="node-config-input-eagerConnection"><i class="fa fa-bolt"></i> Eager Connection</label>
         <input type="checkbox" id="node-config-input-eagerConnection">
     </div>
     <div class="form-row">
-        <label for="node-config-input-useLongpoll"><i class="fa fa-lock"></i> Long Polling</label>
+        <label for="node-config-input-useLongpoll"><i class="fa fa-clock-o"></i> Long Polling</label>
         <input type="checkbox" id="node-config-input-useLongpoll">
     </div>
     <div class="form-row">
         <label for="node-config-input-oAuthUrl"><i class="fa fa-sign-in"></i> OAuth URL</label>
-        <input type="text" id="node-config-input-oAuthUrl" placeholder="optional">
+        <input type="text" id="node-config-input-oAuthUrl" placeholder="https://login.cloud.camunda.io/oauth/token">
     </div>
     <div class="form-row">
         <label for="node-config-input-clientId"><i class="fa fa-id-card-o"></i> Client ID</label>
